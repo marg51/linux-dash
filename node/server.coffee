@@ -93,6 +93,15 @@ server.get '/loadavg.php', (req, res, next) ->
 	res.send ""
 	next()
 	
+server.get '/df.php', (req, res, next) ->
+	spawned = spawn('df', ['-h'])
+	awk = spawn('/usr/bin/awk',['{print $1","$2","$3","$4","$5","$6}'])
+	spawned.stdout.on 'data', (data) ->
+		awk.stdin.write(data)
+		awk.stdin.end()
+		awk.stdout.on 'data', (awk) ->
+			res.send(awk.toString())
+	next()
 
 server.listen config.port, ->
 	console.log("serveur démaré sur :#{config.port}")
