@@ -4,6 +4,8 @@ config = require('./config').config
 spawn = require('child_process').spawn
 fs = require('fs')
 
+cache = {cores:1}
+
 server = restify.createServer 
 	name: config.name
 	version: config.version
@@ -24,10 +26,12 @@ server.get '/issue.php', (req, res, next) ->
 		res.send data.toString()
 	next()
 
+spawned = spawn('grep', ['-c','^processor','/proc/cpuinfo'])
+spawned.stdout.on 'data', (data) ->
+	cache.cores = data.toString()
+
 server.get '/numberofcores.php', (req, res, next) ->
-	spawned = spawn('grep', ['-c','^processor','/proc/cpuinfo'])
-	spawned.stdout.on 'data', (data) ->
-		res.send data.toString()
+	res.send cache.cores
 	next()
 
 server.get '/mem.php', (req, res, next) ->
@@ -90,7 +94,9 @@ server.get '/ip.php', (req, res, next) ->
 	next()
 
 server.get '/loadavg.php', (req, res, next) ->
-	res.send ""
+	spawned = spawn('uptime', [])
+	spawned.stdout.on 'data', (data) ->
+		res.send(data.toString().split(':')[3].trim().split(' ').map((el)->[el,el*100/cache.cores]))
 	next()
 	
 server.get '/df.php', (req, res, next) ->
@@ -100,7 +106,7 @@ server.get '/df.php', (req, res, next) ->
 		awk.stdin.write(data)
 		awk.stdin.end()
 		awk.stdout.on 'data', (awk) ->
-			res.send(awk.toString())
+			res.send(awk.toString().split('\n').splice(1).map((el)->el.split(',')))
 	next()
 
 server.listen config.port, ->
