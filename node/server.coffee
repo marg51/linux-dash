@@ -60,6 +60,7 @@ server.get '/ps.php', (req, res, next) ->
 	awk = spawn('/usr/bin/awk',['NR>1{print $1","$2","$3","$4","$5","$6","$7","$8","$9","$10","$11}'])
 	spawned.stdout.on 'data', (data) ->
 		awk.stdin.write(data)
+	spawned.stdout.on 'end', ->
 		awk.stdin.end()
 		awk.stdout.on 'data', (awk) ->
 			res.send(awk.toString().split('\n').map((el)->el.split(',')))
@@ -96,7 +97,8 @@ server.get '/ip.php', (req, res, next) ->
 server.get '/loadavg.php', (req, res, next) ->
 	spawned = spawn('uptime', [])
 	spawned.stdout.on 'data', (data) ->
-		res.send(data.toString().split(':')[3].trim().split(' ').map((el)->[el,el*100/cache.cores]))
+		res.send(data.toString().split(':')[4].trim().replace(/,/g,'').split(' ').map((el)->[el,Math.ceil(el*100/cache.cores)]))
+
 	next()
 	
 server.get '/df.php', (req, res, next) ->
