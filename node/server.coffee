@@ -36,7 +36,7 @@ server.get '/numberofcores.php', (req, res, next) ->
 
 server.get '/mem.php', (req, res, next) ->
 	spawned = spawn('/usr/bin/free', ['-tmo'])
-	awk = spawn('/usr/bin/awk',['{print $1","$2","$3-$6-$7","$4+$6+$7}'])
+	awk = spawn('/usr/bin/awk',['{print $1","$2","$3","$4}'])
 	spawned.stdout.on 'data', (data) ->
 		awk.stdin.write(data)
 	spawned.stdout.on 'end', ->
