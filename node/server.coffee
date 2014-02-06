@@ -39,9 +39,10 @@ server.get '/mem.php', (req, res, next) ->
 	awk = spawn('/usr/bin/awk',['{print $1","$2","$3-$6-$7","$4+$6+$7}'])
 	spawned.stdout.on 'data', (data) ->
 		awk.stdin.write(data)
+	spawned.stdout.on 'end', ->
 		awk.stdin.end()
 		awk.stdout.on 'data', (awk) ->
-			res.send(awk.toString().split('\n')[1])
+			res.send(awk.toString().split('\n')[1].split(','))
 	next()
 
 server.get '/online.php', (req, res, next) ->
